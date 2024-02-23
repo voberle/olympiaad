@@ -22,4 +22,6 @@ Example.
 
 ## Results
 
-Took me 17 minutes for the version that passes all the tests. However I'm not sure it's fast enough, as for test 20 it takes 230 ms on my M1, a bit too close to the 1 second it's supposed to run on a 1,5 GHz Pentium IV.
+Took me 17 minutes for the version that passes all the tests. However I'm not sure it's fast enough, as for test 20 it takes 730 ms on my M1, a bit too close to the 1 second it's supposed to run on a 1,5 GHz Pentium IV.
+
+*Update:* Switching to a HashSet instead of a Vec for the input made it much faster, down to 5 ms. Took me about an extra 10 mins.

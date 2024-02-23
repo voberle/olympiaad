@@ -1,23 +1,27 @@
-use std::io::{self, Read};
+use std::{
+    collections::HashSet,
+    io::{self, Read},
+};
 
 fn main() {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input).unwrap();
-    let mut number: Vec<u32> = input
+    let numbers: HashSet<u32> = input
         .lines()
-        .skip(1)
-        .next()
+        .nth(1)
         .unwrap()
         .split(' ')
         .map(|v| v.parse().unwrap())
         .collect();
 
-    number.sort_unstable();
+    let mut min = u32::MAX;
+    let mut max = u32::MIN;
+    numbers.iter().for_each(|n| {
+        min = min.min(*n);
+        max = max.max(*n);
+    });
 
-    let unwanted_numbers: Vec<u32> = (number[0] + 1..*number.last().unwrap())
-        .into_iter()
-        .filter(|n| !number.contains(n))
-        .collect();
+    let unwanted_numbers: Vec<u32> = (min + 1..max).filter(|n| !numbers.contains(n)).collect();
 
     println!("{}", unwanted_numbers.len());
     println!(
@@ -28,8 +32,4 @@ fn main() {
             .collect::<Vec<String>>()
             .join(" ")
     );
-    // for n in unwanted_numbers {
-    //     print!("{}", n);
-    //     if
-    // }
 }

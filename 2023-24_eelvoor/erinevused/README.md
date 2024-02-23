@@ -29,3 +29,5 @@ In the class, there are 3 students who earned 1, 4, and 2 points, respectively. 
 I got a version that passes all the tests in 12 minutes.
 
 But at least test 7 and 9 are too slow (1 sec on a M1).
+
+I didn't see how to optimize it, but from the solutions there was indeed a very nice trick that counts the pairs. That one runs on 3 ms.

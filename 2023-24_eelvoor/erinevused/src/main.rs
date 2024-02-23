@@ -1,13 +1,15 @@
-use std::io::{self, Read};
+use std::io::{self, BufRead};
 
 fn main() {
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input).unwrap();
-    let numbers: Vec<u64> = input
+    let stdin = io::stdin();
+    let numbers: Vec<u64> = stdin
+        .lock()
         .lines()
-        .nth(1)
+        .skip(1)
+        .next()
         .unwrap()
-        .split(' ')
+        .unwrap()
+        .split_whitespace()
         .map(|v| v.parse().unwrap())
         .collect();
 

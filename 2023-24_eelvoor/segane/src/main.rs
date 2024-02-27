@@ -1,13 +1,24 @@
-use std::io::{self, BufRead};
 use std::collections::{HashSet, VecDeque};
+use std::io::{self, BufRead};
 
 const DEBUG: bool = false;
 
 // Trying to solve it with N = 2
-fn find_output_n2(mut inq: VecDeque<char>, mut out1: Vec<char>, mut out2: Vec<char>, results: &mut HashSet<Vec<char>>, expected_len: usize) {
+fn find_output_n2(
+    mut inq: VecDeque<char>,
+    mut out1: Vec<char>,
+    mut out2: Vec<char>,
+    results: &mut HashSet<Vec<char>>,
+    expected_len: usize,
+    cache: &mut HashSet<(VecDeque<char>, Vec<char>, Vec<char>)>,
+) {
     if DEBUG {
         // println!("inq={:?}: {:?} {:?}", inq, out1, out2);
         // println!("inq.len={}: o1={} o2={}, exp={}", inq.len(), out1.len(), out2.len(), expected_len);
+    }
+
+    if !cache.insert((inq.clone(), out1.clone(), out2.clone())) {
+        return;
     }
 
     // If the remaining letters don't contain what we need for the shortest to catchup on the longest
@@ -21,7 +32,6 @@ fn find_output_n2(mut inq: VecDeque<char>, mut out1: Vec<char>, mut out2: Vec<ch
             return;
         }
     }
-
 
     while let Some(first) = inq.pop_front() {
         // The shortest part has to be equal to the beginning of the other part.
@@ -62,10 +72,10 @@ fn find_output_n2(mut inq: VecDeque<char>, mut out1: Vec<char>, mut out2: Vec<ch
         } else if o1_len == expected_len {
             // If one string is full, we pick the other one
             out2.push(first);
-            continue;        
+            continue;
         } else if o2_len == expected_len {
             out1.push(first);
-            continue;        
+            continue;
         }
 
         if inq.is_empty() {
@@ -76,13 +86,13 @@ fn find_output_n2(mut inq: VecDeque<char>, mut out1: Vec<char>, mut out2: Vec<ch
         if o1_len < expected_len {
             let mut new_out1 = out1.clone();
             new_out1.push(first);
-            find_output_n2(inq.clone(), new_out1, out2.clone(), results, expected_len);
+            find_output_n2(inq.clone(), new_out1, out2.clone(), results, expected_len, cache);
         }
 
         if o2_len < expected_len {
             let mut new_out2 = out2.clone();
             new_out2.push(first);
-            find_output_n2(inq.clone(), out1.clone(), new_out2, results, expected_len);
+            find_output_n2(inq.clone(), out1.clone(), new_out2, results, expected_len, cache);
         }
 
         break;
@@ -93,9 +103,11 @@ fn find_output_n2(mut inq: VecDeque<char>, mut out1: Vec<char>, mut out2: Vec<ch
         if DEBUG {
             // println!("Insert {:?}", out1);
         }
-        results.insert(out1);
+        let was_in = results.insert(out1);
+        if DEBUG {
+            // println!("Was in? {}", was_in);
+        }
     }
-
 }
 
 fn find_output(input: &str, count: usize) -> Vec<String> {
@@ -109,10 +121,12 @@ fn find_output(input: &str, count: usize) -> Vec<String> {
     let inq: VecDeque<char> = input.chars().collect();
     let expected_len = inq.len() / 2;
 
+    let mut cache: HashSet<(VecDeque<char>, Vec<char>, Vec<char>)> = HashSet::new();
+
     if DEBUG {
         println!("Searching {} for {} programs", input, count);
     }
-    find_output_n2(inq, out1, out2, &mut results, expected_len);
+    find_output_n2(inq, out1, out2, &mut results, expected_len, &mut cache);
 
     let mut res_str: Vec<String> = results.iter().map(|r| r.iter().collect()).collect();
     res_str.sort_unstable();
@@ -138,29 +152,52 @@ fn main() {
         }
         let result = find_output(&input.1, input.0);
         println!("{}", result.len());
-        println!("{}", result.iter().map(|v| v.to_string())
-        .collect::<Vec<String>>()
-        .join(" "));
+        println!(
+            "{}",
+            result
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<String>>()
+                .join(" ")
+        );
     }
 }
 
 #[test]
 fn test_find_output_n2() {
-    assert_eq!(find_output("/home//homjukue/ju/lahkeundu/sedl/ahseeganendused/segane", 2), ["/home/juku/lahendused/segane"]);
-    assert_eq!(find_output("/h/ohomme/e/juku/lajukhue/landusehedn/segadunseed/segane", 2), ["/home/juku/lahendused/segane"]);
+    assert_eq!(
+        find_output(
+            "/home//homjukue/ju/lahkeundu/sedl/ahseeganendused/segane",
+            2
+        ),
+        ["/home/juku/lahendused/segane"]
+    );
+    assert_eq!(
+        find_output(
+            "/h/ohomme/e/juku/lajukhue/landusehedn/segadunseed/segane",
+            2
+        ),
+        ["/home/juku/lahendused/segane"]
+    );
     assert_eq!(find_output("abcdabcd", 2), ["abcd"]);
     assert_eq!(find_output("aabbaabb", 2), ["aabb", "abab"]);
 }
 
 #[test]
 fn test_other_1() {
-    assert_eq!(find_output("iiiiirirrrirrrirrrrrrr", 2), ["iiiirrrrrrr", "iiirirrrrrr", "iiirrirrrrr", "iiirrrirrrr"]);
+    assert_eq!(
+        find_output("iiiiirirrrirrrirrrrrrr", 2),
+        ["iiiirrrrrrr", "iiirirrrrrr", "iiirrirrrrr", "iiirrrirrrr"]
+    );
 }
 
 #[test]
 fn test_other_2() {
-    assert_eq!(find_output("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk", 2), ["kkkkkkkkkkkkkkkkkkkkkkkk", "kkkkkkkkkkkkkkkkkkkkkkkk"]);
+    assert_eq!(
+        find_output("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk", 2),
+        ["kkkkkkkkkkkkkkkkkkkkkkkk", "kkkkkkkkkkkkkkkkkkkkkkkk"]
+    );
 }
 
-    // assert_eq!(find_output("aaaaaaaaaa", 5), ["aa"]);
-    // assert_eq!(find_output("eerrrroereorrrorrror", 4), ["error"]);
+// assert_eq!(find_output("aaaaaaaaaa", 5), ["aa"]);
+// assert_eq!(find_output("eerrrroereorrrorrror", 4), ["error"]);

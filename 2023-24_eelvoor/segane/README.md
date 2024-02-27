@@ -80,6 +80,7 @@ In the first subtest, the outputs of program instances are output sequentially. 
 
 ## Results
 
-Current version is implemented for N = 2 and works for evaluation 1.
+Version history:
 
-It works for part 2 as well (except the "kkk" case in test 4), but it's too slow.
+- Initial version iimplemented for N = 2 and works for evaluation 1. It worked for part 2 as well (except the "kkk" case in test 4), but it's too slow.
+- Optimized it by adding a cache to prevent recursing into stuff we already did. That fixed the performance issue and got it working for part 2.

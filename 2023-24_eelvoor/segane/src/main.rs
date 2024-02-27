@@ -1,9 +1,14 @@
 use std::collections::{HashSet, VecDeque};
 use std::io::{self, BufRead};
 
-const DEBUG: bool = false;
-
-// Trying to solve it with N = 2
+/// Trying to solve it with N = 2
+/// Recursive function.
+///
+/// * inq - Remaining chars we need to loop at.
+/// * out1 and out2 - What we have build so far.
+/// * results - Valid full outputs we found. Using a hash set as we can find multiple times the same.
+/// * expected_len - How long the final outputs need to be.
+/// * cache - A hash set with (inq, out1, out2), so we don't go looking for things already done.
 fn find_output_n2(
     mut inq: VecDeque<char>,
     mut out1: Vec<char>,
@@ -12,54 +17,26 @@ fn find_output_n2(
     expected_len: usize,
     cache: &mut HashSet<(VecDeque<char>, Vec<char>, Vec<char>)>,
 ) {
-    if DEBUG {
-        // println!("inq={:?}: {:?} {:?}", inq, out1, out2);
-        // println!("inq.len={}: o1={} o2={}, exp={}", inq.len(), out1.len(), out2.len(), expected_len);
-    }
-
+    // If we have already seen this path.
     if !cache.insert((inq.clone(), out1.clone(), out2.clone())) {
         return;
     }
 
-    // If the remaining letters don't contain what we need for the shortest to catchup on the longest
-    // there is no need to check further
-    if out1.len() < out2.len() {
-        if !inq.contains(&out2[out1.len()]) {
-            return;
-        }
-    } else if out2.len() < out1.len() {
-        if !inq.contains(&out1[out2.len()]) {
-            return;
-        }
-    }
-
     while let Some(first) = inq.pop_front() {
-        // The shortest part has to be equal to the beginning of the other part.
-        // That check is probably not needed.
-        if out1.len() < out2.len() {
-            if out1 != out2[0..out1.len()] {
-                return;
-            }
-        } else {
-            if out1[0..out2.len()] != out2 {
-                return;
-            }
-        }
-
-        // println!("{first}: {:?} {:?}", out1, out2);
         let o1_len = out1.len();
         let o2_len = out2.len();
+
+        // All the cases where we are sure where to put the letter.
+
         // if we put it to the shortest, does it work? If not we can exclude that option
         if o1_len < o2_len && o2_len < expected_len {
-            let pos = o1_len;
-            if out2[pos] != first {
+            if out2[o1_len] != first {
                 // we cannot put the char into out1, has to go to out2.
                 out2.push(first);
                 continue;
             }
         } else if o1_len > o2_len && o1_len < expected_len {
-            let pos = o2_len;
-            if out1[pos] != first {
+            if out1[o2_len] != first {
                 out1.push(first);
                 continue;
             }
@@ -82,31 +59,41 @@ fn find_output_n2(
             break;
         }
 
-        // any other case, we have two options, can go to either
+        // If we couldn't pick an option, we have to explore both,
+        // but only if we haven't reached the expected length.
         if o1_len < expected_len {
             let mut new_out1 = out1.clone();
             new_out1.push(first);
-            find_output_n2(inq.clone(), new_out1, out2.clone(), results, expected_len, cache);
+            find_output_n2(
+                inq.clone(),
+                new_out1,
+                out2.clone(),
+                results,
+                expected_len,
+                cache,
+            );
         }
 
         if o2_len < expected_len {
             let mut new_out2 = out2.clone();
             new_out2.push(first);
-            find_output_n2(inq.clone(), out1.clone(), new_out2, results, expected_len, cache);
+            find_output_n2(
+                inq.clone(),
+                out1.clone(),
+                new_out2,
+                results,
+                expected_len,
+                cache,
+            );
         }
 
+        // If we went to recursively explore sub-paths, we don't look further here.
         break;
     }
 
-    // once input is empty, results are only valid if they are equals
+    // Once input is empty, results are only valid if they are equals
     if out1 == out2 && out1.len() == expected_len {
-        if DEBUG {
-            // println!("Insert {:?}", out1);
-        }
-        let was_in = results.insert(out1);
-        if DEBUG {
-            // println!("Was in? {}", was_in);
-        }
+        results.insert(out1);
     }
 }
 
@@ -123,16 +110,12 @@ fn find_output(input: &str, count: usize) -> Vec<String> {
 
     let mut cache: HashSet<(VecDeque<char>, Vec<char>, Vec<char>)> = HashSet::new();
 
-    if DEBUG {
-        println!("Searching {} for {} programs", input, count);
-    }
+    // println!("Searching {} for {} programs", input, count);
     find_output_n2(inq, out1, out2, &mut results, expected_len, &mut cache);
 
     let mut res_str: Vec<String> = results.iter().map(|r| r.iter().collect()).collect();
     res_str.sort_unstable();
-    if DEBUG {
-        println!("Result: {:?}", res_str);
-    }
+    // println!("Result: {:?}", res_str);
     res_str
 }
 

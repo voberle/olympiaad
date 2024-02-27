@@ -61,3 +61,25 @@ In the first subtest, the outputs of program instances are output sequentially. 
 1. (15 points) N = 2, L ⩽ 11.
 2. (15 points) N = 2.
 3. (30 points) No additional conditions.
+
+## Scoring
+
+1. (15 points) N = 2, L ⩽ 11.
+
+    ../run_tests.sh 1..3
+
+2. (15 points) N = 2.
+
+    ../run_tests.sh 4..6
+    ../run_tests.sh 1..6
+
+3. (30 points) No additional conditions.
+
+    ../run_tests.sh 7..12
+    ../run_tests.sh
+
+## Results
+
+Current version is implemented for N = 2 and works for evaluation 1.
+
+It works for part 2 as well (except the "kkk" case in test 4), but it's too slow.

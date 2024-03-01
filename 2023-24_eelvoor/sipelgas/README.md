@@ -20,8 +20,10 @@ Write a program that takes the sequence of commands executed by the ant so far a
 
 In the figure below, the red arrows indicate the ant's location and head direction, and the blue and green lines indicate movements according to the commands given in the input and output, respectively.
 
+[Cubes](./sipelgas.png)
+
 ## Results
 
-This exercise just sucks. It's not about programming at all, but about who manages to see things well in 3D. The coding then is trivial. Dumb stuff.
+I didn't implement this one.
 
-NB: I reimplemented the solution from the responses.
+Honestly, this exercise just sucks. It's not about programming at all, but about who manages to see things well in 3D. The coding then is trivial. Dumb stuff.

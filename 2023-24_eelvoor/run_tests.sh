@@ -34,7 +34,7 @@ do
     fi
 
     echo "Running test $N ($DATA_PATH/$TASK/input/input$N.txt)"
-    cat $DATA_PATH/$TASK/input/input$N.txt | $BIN > target/release/output.txt
+    cat $DATA_PATH/$TASK/input/input$N.txt | $BIN > target/release/output.txt 2>/dev/null
     diff --strip-trailing-cr $DATA_PATH/$TASK/output/output$N.txt target/release/output.txt
 
     # hyperfine "cat $DATA_PATH/$TASK/input/input$N.txt | $BIN > target/release/output.txt"

@@ -85,3 +85,4 @@ Version history:
 - Initial version implemented for N = 2 and works for evaluation 1. It worked for part 2 as well (except the "kkk" case in test 4), but it's too slow.
 - Optimized it by adding a cache to prevent recursing into stuff we already did. That fixed the performance issue and got it working for part 2.
 - Initial version for N > 1. Passes for tests 0 to 7.
+- Working version for N > 1. Passes all tests. Unfortunately some (8, 9) are a bit too slow (6 secs).

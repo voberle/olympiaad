@@ -101,14 +101,14 @@ fn all_equal(outputs: &[Vec<char>]) -> bool {
     outputs.windows(2).all(|o| o[0] == o[1])
 }
 
-/// Trying to solve it for any with N >= 2, but not too big still (< 11).
+/// Solve it for any with N >= 2, but not too big still (< 11).
 /// Recursive function.
 ///
 /// * inq - Remaining chars we need to loop at.
 /// * out - Outputs we have build so far.
 /// * results - Valid full outputs we found. Using a hash set as we can find multiple times the same.
 /// * expected_len - How long the final outputs need to be.
-/// * cache - A hash set with (inq, out1, out2), so we don't go looking for things already done.
+/// * cache - A hash set with (inq, outputs), so we don't go looking for things already done.
 fn find_output_any_n(
     mut inq: VecDeque<char>,
     mut outputs: Vec<Vec<char>>,
@@ -117,17 +117,20 @@ fn find_output_any_n(
     cache: &mut HashSet<(VecDeque<char>, Vec<Vec<char>>)>,
 ) {
     // If we have already seen this path.
-    if !cache.insert((inq.clone(), outputs.clone())) {
+    let mut outputs_for_cache = outputs.clone();
+    // We sort the outputs, as the order in which they are doesn't matter for caching.
+    outputs_for_cache.sort_unstable();
+    if !cache.insert((inq.clone(), outputs_for_cache.clone())) {
         return;
     }
 
     while let Some(first) = inq.pop_front() {
-        // println!("[{}] outputs={:?}", first, outputs);
+        // eprintln!("[{}] outputs={:?}", first, outputs);
 
         // If all outputs are the same, there is no need to explore all of them, we just pick one option.
         if all_equal(&outputs) {
             outputs[0].push(first);
-            // println!("[{}] All equals", first);
+            // eprintln!("[{}] All equals", first);
             continue;
         }
 
@@ -143,11 +146,11 @@ fn find_output_any_n(
                 continue;
             }
             // Check if the letter in any of the other string at this position is the same as the one we are checking.
-            for out2 in &outputs {
-                if out2.len() <= pos {
+            for other_out in &outputs {
+                if other_out.len() <= pos {
                     continue;
                 }
-                if out2[pos] != first {
+                if other_out[pos] != first {
                     possible[i] = false;
                     break;
                 }
@@ -156,9 +159,11 @@ fn find_output_any_n(
 
         let options_count = possible.iter().filter(|v| **v).count();
         if options_count == 0 {
-            // No options, giving up
+            // No options, giving up.
             break;
-        } else if options_count == 1 {
+        }
+        if options_count == 1 {
+            // Only one option, not going recursive.
             for (i, v) in possible.iter().enumerate() {
                 if *v {
                     outputs[i].push(first);
@@ -168,9 +173,9 @@ fn find_output_any_n(
             continue;
         }
 
-        if inq.is_empty() {
-            break;
-        }
+        // if inq.is_empty() {
+        //     break;
+        // }
 
         // If we couldn't pick an option, we have to explore both,
         // but only if we haven't reached the expected length.
@@ -187,10 +192,12 @@ fn find_output_any_n(
     }
 
     // Once input is empty, results are only valid if they are equals
-    // println!("Input empty ({}) outputs={:?}", inq.len(), outputs);
+    if inq.is_empty() {
+        // eprintln!("Input empty ({}) outputs={:?}", inq.len(), outputs);
 
-    if all_equal(&outputs) {
-        results.insert(outputs[0].clone());
+        if all_equal(&outputs) {
+            results.insert(outputs[0].clone());
+        }
     }
 }
 
@@ -207,31 +214,31 @@ fn _find_output(input: &str, count: usize) -> Vec<String> {
 
     let mut cache: HashSet<(VecDeque<char>, Vec<char>, Vec<char>)> = HashSet::new();
 
-    // println!("Searching {} for {} programs", input, count);
+    // eprintln!("Searching {} for {} programs", input, count);
     find_output_n2(inq, out1, out2, &mut results, expected_len, &mut cache);
 
     let mut res_str: Vec<String> = results.iter().map(|r| r.iter().collect()).collect();
     res_str.sort_unstable();
-    // println!("Result: {:?}", res_str);
+    // eprintln!("Result: {:?}", res_str);
     res_str
 }
 
 fn find_output(input: &str, count: usize) -> Vec<String> {
-    let mut results: HashSet<Vec<char>> = HashSet::new();
-
-    let outputs: Vec<Vec<char>> = vec![Vec::new(); count];
+    let mut results: HashSet<Vec<char>> = HashSet::default();
 
     let inq: VecDeque<char> = input.chars().collect();
     let expected_len = inq.len() / count;
 
-    let mut cache: HashSet<(VecDeque<char>, Vec<Vec<char>>)> = HashSet::new();
+    let outputs: Vec<Vec<char>> = vec![Vec::with_capacity(expected_len); count];
 
-    // println!("Searching {} for {} programs", input, count);
+    let mut cache: HashSet<(VecDeque<char>, Vec<Vec<char>>)> = HashSet::default();
+
+    // eprintln!("Searching {} for {} programs", input, count);
     find_output_any_n(inq, outputs, &mut results, expected_len, &mut cache);
 
     let mut res_str: Vec<String> = results.iter().map(|r| r.iter().collect()).collect();
     res_str.sort_unstable();
-    // println!("Result: {:?}", res_str);
+    // eprintln!("Result: {:?}", res_str);
     res_str
 }
 

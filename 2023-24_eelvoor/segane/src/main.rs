@@ -21,12 +21,13 @@ fn find_output_any_n(
     cache: &mut HashSet<Vec<Vec<char>>>,
 ) {
     // If we have already seen this path.
-    let mut outputs_for_cache = outputs.clone();
     // We sort the outputs, as the order in which they are doesn't matter for caching.
-    outputs_for_cache.sort_unstable();
-    if !cache.insert(outputs_for_cache.clone()) {
+    outputs.sort_unstable();
+    // We are more likely to have cache hits than misses, so doing a contains without a clone on hits is good.
+    if cache.contains(&outputs) {
         return;
     }
+    cache.insert(outputs.clone());
 
     while let Some(first) = inq.pop_front() {
         // eprintln!("[{}] outputs={:?}", first, outputs);

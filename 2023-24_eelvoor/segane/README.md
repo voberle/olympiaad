@@ -86,4 +86,5 @@ Version history:
 - Optimized it by adding a cache to prevent recursing into stuff we already did. That fixed the performance issue and got it working for part 2.
 - Initial version for N > 1. Passes for tests 0 to 7.
 - Working version for N > 1. Passes all tests. Unfortunately some (8, 9) are a bit too slow (6 secs).
-- Simplified the cache, input doesn't need to be part of it. Down to 4,5 secs.
+- Simplified the cache, input doesn't need to be part of it. Down to 4.5 secs.
+- No need to clone the cache key before inserting. Down to 2.8 secs.

@@ -97,7 +97,104 @@ fn find_output_n2(
     }
 }
 
-fn find_output(input: &str, count: usize) -> Vec<String> {
+fn all_equal(outputs: &[Vec<char>]) -> bool {
+    outputs.windows(2).all(|o| o[0] == o[1])
+}
+
+/// Trying to solve it for any with N >= 2, but not too big still (< 11).
+/// Recursive function.
+///
+/// * inq - Remaining chars we need to loop at.
+/// * out - Outputs we have build so far.
+/// * results - Valid full outputs we found. Using a hash set as we can find multiple times the same.
+/// * expected_len - How long the final outputs need to be.
+/// * cache - A hash set with (inq, out1, out2), so we don't go looking for things already done.
+fn find_output_any_n(
+    mut inq: VecDeque<char>,
+    mut outputs: Vec<Vec<char>>,
+    results: &mut HashSet<Vec<char>>,
+    expected_len: usize,
+    cache: &mut HashSet<(VecDeque<char>, Vec<Vec<char>>)>,
+) {
+    // If we have already seen this path.
+    if !cache.insert((inq.clone(), outputs.clone())) {
+        return;
+    }
+
+    while let Some(first) = inq.pop_front() {
+        // println!("[{}] outputs={:?}", first, outputs);
+
+        // If all outputs are the same, there is no need to explore all of them, we just pick one option.
+        if all_equal(&outputs) {
+            outputs[0].push(first);
+            // println!("[{}] All equals", first);
+            continue;
+        }
+
+        // In which outputs is it possible to put the letter.
+        let mut possible = vec![true; outputs.len()];
+
+        // Find the first free position of each output.
+        for (i, out) in outputs.iter().enumerate() {
+            let pos = out.len();
+            // If a string is full, it cannot be added there.
+            if pos == expected_len {
+                possible[i] = false;
+                continue;
+            }
+            // Check if the letter in any of the other string at this position is the same as the one we are checking.
+            for out2 in &outputs {
+                if out2.len() <= pos {
+                    continue;
+                }
+                if out2[pos] != first {
+                    possible[i] = false;
+                    break;
+                }
+            }
+        }
+
+        let options_count = possible.iter().filter(|v| **v).count();
+        if options_count == 0 {
+            // No options, giving up
+            break;
+        } else if options_count == 1 {
+            for (i, v) in possible.iter().enumerate() {
+                if *v {
+                    outputs[i].push(first);
+                    break;
+                }
+            }
+            continue;
+        }
+
+        if inq.is_empty() {
+            break;
+        }
+
+        // If we couldn't pick an option, we have to explore both,
+        // but only if we haven't reached the expected length.
+        for (i, v) in possible.iter().enumerate() {
+            if *v {
+                let mut new_outputs = outputs.clone();
+                new_outputs[i].push(first);
+                find_output_any_n(inq.clone(), new_outputs, results, expected_len, cache);
+            }
+        }
+
+        // If we went to recursively explore sub-paths, we don't look further here.
+        break;
+    }
+
+    // Once input is empty, results are only valid if they are equals
+    // println!("Input empty ({}) outputs={:?}", inq.len(), outputs);
+
+    if all_equal(&outputs) {
+        results.insert(outputs[0].clone());
+    }
+}
+
+fn _find_output(input: &str, count: usize) -> Vec<String> {
     assert_eq!(count, 2);
 
     let mut results: HashSet<Vec<char>> = HashSet::new();
@@ -119,6 +216,25 @@ fn find_output(input: &str, count: usize) -> Vec<String> {
     res_str
 }
 
+fn find_output(input: &str, count: usize) -> Vec<String> {
+    let mut results: HashSet<Vec<char>> = HashSet::new();
+
+    let outputs: Vec<Vec<char>> = vec![Vec::new(); count];
+
+    let inq: VecDeque<char> = input.chars().collect();
+    let expected_len = inq.len() / count;
+
+    let mut cache: HashSet<(VecDeque<char>, Vec<Vec<char>>)> = HashSet::new();
+
+    // println!("Searching {} for {} programs", input, count);
+    find_output_any_n(inq, outputs, &mut results, expected_len, &mut cache);
+
+    let mut res_str: Vec<String> = results.iter().map(|r| r.iter().collect()).collect();
+    res_str.sort_unstable();
+    // println!("Result: {:?}", res_str);
+    res_str
+}
+
 fn main() {
     let stdin = io::stdin();
     let mut it = stdin.lock().lines().skip(1);
@@ -130,9 +246,9 @@ fn main() {
     }
 
     for input in inputs {
-        if input.0 != 2 {
-            continue;
-        }
+        // if input.0 != 2 {
+        //     continue;
+        // }
         let result = find_output(&input.1, input.0);
         println!("{}", result.len());
         println!(
@@ -167,20 +283,19 @@ fn test_find_output_n2() {
 }
 
 #[test]
-fn test_other_1() {
+fn test_extra_n2() {
     assert_eq!(
         find_output("iiiiirirrrirrrirrrrrrr", 2),
         ["iiiirrrrrrr", "iiirirrrrrr", "iiirrirrrrr", "iiirrrirrrr"]
     );
-}
-
-#[test]
-fn test_other_2() {
     assert_eq!(
         find_output("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk", 2),
-        ["kkkkkkkkkkkkkkkkkkkkkkkk", "kkkkkkkkkkkkkkkkkkkkkkkk"]
+        ["kkkkkkkkkkkkkkkkkkkkkkkk"]
     );
 }
 
-// assert_eq!(find_output("aaaaaaaaaa", 5), ["aa"]);
-// assert_eq!(find_output("eerrrroereorrrorrror", 4), ["error"]);
+#[test]
+fn test_find_output_any_n() {
+    assert_eq!(find_output("aaaaaaaaaa", 5), ["aa"]);
+    assert_eq!(find_output("eerrrroereorrrorrror", 4), ["error"]);
+}

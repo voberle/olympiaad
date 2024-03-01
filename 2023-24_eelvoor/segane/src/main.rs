@@ -1,102 +1,6 @@
 use std::collections::{HashSet, VecDeque};
 use std::io::{self, BufRead};
 
-/// Trying to solve it with N = 2
-/// Recursive function.
-///
-/// * inq - Remaining chars we need to loop at.
-/// * out1 and out2 - What we have build so far.
-/// * results - Valid full outputs we found. Using a hash set as we can find multiple times the same.
-/// * expected_len - How long the final outputs need to be.
-/// * cache - A hash set with (inq, out1, out2), so we don't go looking for things already done.
-fn find_output_n2(
-    mut inq: VecDeque<char>,
-    mut out1: Vec<char>,
-    mut out2: Vec<char>,
-    results: &mut HashSet<Vec<char>>,
-    expected_len: usize,
-    cache: &mut HashSet<(VecDeque<char>, Vec<char>, Vec<char>)>,
-) {
-    // If we have already seen this path.
-    if !cache.insert((inq.clone(), out1.clone(), out2.clone())) {
-        return;
-    }
-
-    while let Some(first) = inq.pop_front() {
-        let o1_len = out1.len();
-        let o2_len = out2.len();
-
-        // All the cases where we are sure where to put the letter.
-
-        // if we put it to the shortest, does it work? If not we can exclude that option
-        if o1_len < o2_len && o2_len < expected_len {
-            if out2[o1_len] != first {
-                // we cannot put the char into out1, has to go to out2.
-                out2.push(first);
-                continue;
-            }
-        } else if o1_len > o2_len && o1_len < expected_len {
-            if out1[o2_len] != first {
-                out1.push(first);
-                continue;
-            }
-        } else if o1_len == o2_len && o1_len < expected_len {
-            // If the strings are the same, we just pick one option
-            if out1 == out2 {
-                out1.push(first);
-                continue;
-            }
-        } else if o1_len == expected_len {
-            // If one string is full, we pick the other one
-            out2.push(first);
-            continue;
-        } else if o2_len == expected_len {
-            out1.push(first);
-            continue;
-        }
-
-        if inq.is_empty() {
-            break;
-        }
-
-        // If we couldn't pick an option, we have to explore both,
-        // but only if we haven't reached the expected length.
-        if o1_len < expected_len {
-            let mut new_out1 = out1.clone();
-            new_out1.push(first);
-            find_output_n2(
-                inq.clone(),
-                new_out1,
-                out2.clone(),
-                results,
-                expected_len,
-                cache,
-            );
-        }
-
-        if o2_len < expected_len {
-            let mut new_out2 = out2.clone();
-            new_out2.push(first);
-            find_output_n2(
-                inq.clone(),
-                out1.clone(),
-                new_out2,
-                results,
-                expected_len,
-                cache,
-            );
-        }
-
-        // If we went to recursively explore sub-paths, we don't look further here.
-        break;
-    }
-
-    // Once input is empty, results are only valid if they are equals
-    if out1 == out2 && out1.len() == expected_len {
-        results.insert(out1);
-    }
-}
-
 fn all_equal(outputs: &[Vec<char>]) -> bool {
     outputs.windows(2).all(|o| o[0] == o[1])
 }
@@ -197,28 +101,6 @@ fn find_output_any_n(
     }
 }
 
-fn _find_output(input: &str, count: usize) -> Vec<String> {
-    assert_eq!(count, 2);
-
-    let mut results: HashSet<Vec<char>> = HashSet::new();
-
-    let out1: Vec<char> = Vec::new();
-    let out2: Vec<char> = Vec::new();
-
-    let inq: VecDeque<char> = input.chars().collect();
-    let expected_len = inq.len() / 2;
-
-    let mut cache: HashSet<(VecDeque<char>, Vec<char>, Vec<char>)> = HashSet::new();
-
-    // eprintln!("Searching {} for {} programs", input, count);
-    find_output_n2(inq, out1, out2, &mut results, expected_len, &mut cache);
-
-    let mut res_str: Vec<String> = results.iter().map(|r| r.iter().collect()).collect();
-    res_str.sort_unstable();
-    // eprintln!("Result: {:?}", res_str);
-    res_str
-}
-
 fn find_output(input: &str, count: usize) -> Vec<String> {
     let mut results: HashSet<Vec<char>> = HashSet::default();
 
@@ -249,9 +131,6 @@ fn main() {
     }
 
     for input in inputs {
-        // if input.0 != 2 {
-        //     continue;
-        // }
         let result = find_output(&input.1, input.0);
         println!("{}", result.len());
         println!(

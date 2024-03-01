@@ -108,19 +108,19 @@ fn all_equal(outputs: &[Vec<char>]) -> bool {
 /// * out - Outputs we have build so far.
 /// * results - Valid full outputs we found. Using a hash set as we can find multiple times the same.
 /// * expected_len - How long the final outputs need to be.
-/// * cache - A hash set with (inq, outputs), so we don't go looking for things already done.
+/// * cache - A hash set with outputs, so we don't go looking for things already done.
 fn find_output_any_n(
     mut inq: VecDeque<char>,
     mut outputs: Vec<Vec<char>>,
     results: &mut HashSet<Vec<char>>,
     expected_len: usize,
-    cache: &mut HashSet<(VecDeque<char>, Vec<Vec<char>>)>,
+    cache: &mut HashSet<Vec<Vec<char>>>,
 ) {
     // If we have already seen this path.
     let mut outputs_for_cache = outputs.clone();
     // We sort the outputs, as the order in which they are doesn't matter for caching.
     outputs_for_cache.sort_unstable();
-    if !cache.insert((inq.clone(), outputs_for_cache.clone())) {
+    if !cache.insert(outputs_for_cache.clone()) {
         return;
     }
 
@@ -172,10 +172,6 @@ fn find_output_any_n(
             }
             continue;
         }
-
-        // if inq.is_empty() {
-        //     break;
-        // }
 
         // If we couldn't pick an option, we have to explore both,
         // but only if we haven't reached the expected length.
@@ -231,7 +227,7 @@ fn find_output(input: &str, count: usize) -> Vec<String> {
 
     let outputs: Vec<Vec<char>> = vec![Vec::with_capacity(expected_len); count];
 
-    let mut cache: HashSet<(VecDeque<char>, Vec<Vec<char>>)> = HashSet::default();
+    let mut cache: HashSet<Vec<Vec<char>>> = HashSet::default();
 
     // eprintln!("Searching {} for {} programs", input, count);
     find_output_any_n(inq, outputs, &mut results, expected_len, &mut cache);

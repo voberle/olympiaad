@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 use std::io::{self, BufRead};
 
 fn all_equal(outputs: &[Vec<char>]) -> bool {
@@ -14,7 +14,7 @@ fn all_equal(outputs: &[Vec<char>]) -> bool {
 /// * expected_len - How long the final outputs need to be.
 /// * cache - A hash set with outputs, so we don't go looking for things already done.
 fn find_output_any_n(
-    mut inq: VecDeque<char>,
+    inq: &[char],
     mut outputs: Vec<Vec<char>>,
     results: &mut HashSet<Vec<char>>,
     expected_len: usize,
@@ -29,83 +29,72 @@ fn find_output_any_n(
     }
     cache.insert(outputs.clone());
 
-    while let Some(first) = inq.pop_front() {
-        // eprintln!("[{}] outputs={:?}", first, outputs);
+    let mut index = 0;
+    while index < inq.len() {
+        let first = inq[index];
+        index += 1;
 
         // If all outputs are the same, there is no need to explore all of them, we just pick one option.
         if all_equal(&outputs) {
             outputs[0].push(first);
-            // eprintln!("[{}] All equals", first);
             continue;
         }
 
         // In which outputs is it possible to put the letter.
-        let mut possible = vec![true; outputs.len()];
+        let mut possible = Vec::with_capacity(outputs.len());
 
         // Find the first free position of each output.
         for (i, out) in outputs.iter().enumerate() {
             let pos = out.len();
             // If a string is full, it cannot be added there.
             if pos == expected_len {
-                possible[i] = false;
                 continue;
             }
+
+            possible.push(i);
             // Check if the letter in any of the other string at this position is the same as the one we are checking.
             for other_out in &outputs {
                 if other_out.len() <= pos {
                     continue;
                 }
                 if other_out[pos] != first {
-                    possible[i] = false;
+                    possible.pop();
                     break;
                 }
             }
         }
 
-        let options_count = possible.iter().filter(|v| **v).count();
-        if options_count == 0 {
+        if possible.is_empty() {
             // No options, giving up.
             break;
         }
-        if options_count == 1 {
+        if possible.len() == 1 {
             // Only one option, not going recursive.
-            for (i, v) in possible.iter().enumerate() {
-                if *v {
-                    outputs[i].push(first);
-                    break;
-                }
-            }
+            outputs[possible[0]].push(first);
             continue;
         }
 
-        // If we couldn't pick an option, we have to explore both,
-        // but only if we haven't reached the expected length.
-        for (i, v) in possible.iter().enumerate() {
-            if *v {
-                let mut new_outputs = outputs.clone();
-                new_outputs[i].push(first);
-                find_output_any_n(inq.clone(), new_outputs, results, expected_len, cache);
-            }
+        // If we couldn't pick an option, we have to explore all.
+        for i in possible {
+            let mut new_outputs = outputs.clone();
+            new_outputs[i].push(first);
+            find_output_any_n(&inq[index..], new_outputs, results, expected_len, cache);
         }
 
         // If we went to recursively explore sub-paths, we don't look further here.
         break;
     }
 
-    // Once input is empty, results are only valid if they are equals
-    if inq.is_empty() {
-        // eprintln!("Input empty ({}) outputs={:?}", inq.len(), outputs);
-
-        if all_equal(&outputs) {
-            results.insert(outputs[0].clone());
-        }
+    // Once input has been fully explored, results are only valid if they are equals.
+    if index == inq.len() && all_equal(&outputs) {
+        results.insert(outputs[0].clone());
     }
 }
 
 fn find_output(input: &str, count: usize) -> Vec<String> {
     let mut results: HashSet<Vec<char>> = HashSet::default();
 
-    let inq: VecDeque<char> = input.chars().collect();
+    let inq: Vec<char> = input.chars().collect();
     let expected_len = inq.len() / count;
 
     let outputs: Vec<Vec<char>> = vec![Vec::with_capacity(expected_len); count];
@@ -113,7 +102,7 @@ fn find_output(input: &str, count: usize) -> Vec<String> {
     let mut cache: HashSet<Vec<Vec<char>>> = HashSet::default();
 
     // eprintln!("Searching {} for {} programs", input, count);
-    find_output_any_n(inq, outputs, &mut results, expected_len, &mut cache);
+    find_output_any_n(&inq, outputs, &mut results, expected_len, &mut cache);
 
     let mut res_str: Vec<String> = results.iter().map(|r| r.iter().collect()).collect();
     res_str.sort_unstable();
